@@ -1,0 +1,24 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build t aakashraina/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true aakashraina/react-test npm test
+
+after_success:
+  - docker build -t aakashraina/multi-client ./client
+  - docker build -t aakashraina/multi-nginx ./nginx
+  - docker build -t aakashraina/multi-server ./server
+  - docker build -t aakashraina/multi-worker ./worker
+
+  # Login to docker CLI and then through that
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take and push these prod images to docker hub
+  - docker push aakashraina/multi-client
+  - docker push aakashraina/multi-nginx
+  - docker push aakashraina/multi-server
+  - docker push aakashraina/multi-worker
